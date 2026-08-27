@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scar Tissue — The Agent That Remembers What Broke You</title>
+    <meta name="description" content="An AI coding agent that tracks your recurring bugs and warns you before you repeat them. Built on Sibyl Memory.">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-primary: #0a0a0b;
+            --bg-secondary: #111113;
+            --bg-tertiary: #1a1a1e;
+            --bg-card: #141417;
+            --border: #2a2a2e;
+            --border-hover: #3a3a3e;
+            --text-primary: #f5f5f7;
+            --text-secondary: #a1a1a6;
+            --text-muted: #6e6e73;
+            --accent-red: #ff3b30;
+            --accent-red-dim: rgba(255, 59, 48, 0.15);
+            --accent-orange: #ff9500;
+            --accent-orange-dim: rgba(255, 149, 0, 0.15);
+            --accent-yellow: #ffcc00;
+            --accent-yellow-dim: rgba(255, 204, 0, 0.15);
+            --accent-green: #34c759;
+            --accent-green-dim: rgba(52, 199, 89, 0.15);
+            --accent-blue: #007aff;
+            --accent-blue-dim: rgba(0, 122, 255, 0.15);
+            --accent-purple: #af52de;
+            --accent-purple-dim: rgba(175, 82, 222, 0.15);
+            --glow-red: 0 0 40px rgba(255, 59, 48, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Noise texture overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            padding: 120px 24px 80px;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(255, 59, 48, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .badge .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-red);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        .hero h1 {
+            font-size: clamp(48px, 8vw, 96px);
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            line-height: 1.05;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero h1 .highlight {
+            background: linear-gradient(135deg, var(--accent-red) 0%, var(--accent-orange) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero .subtitle {
+            font-size: clamp(18px, 2.5vw, 24px);
+            color: var(--text-secondary);
+            max-width: 640px;
+            margin-bottom: 48px;
+            font-weight: 400;
+            line-height: 1.5;
+        }
+
+        .hero .subtitle code {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-tertiary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: var(--accent-red);
+        }
+
+        .cta-group {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--text-primary);
+            color: var(--bg-primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--text-secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card);
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+        }
+
+        /* Terminal Demo */
+        .terminal-section {
+            padding: 80px 0;
+        }
+
+        .terminal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            max-width: 900px;
+            margin: 0 auto;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 20px;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .terminal-dot.red { background: #ff5f57; }
+        .terminal-dot.yellow { background: #febc2e; }
+        .terminal-dot.green { background: #28c840; }
+
+        .terminal-title {
+            flex: 1;
+            text-align: center;
+            font-size: 13px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .terminal-body {
+            padding: 24px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            min-height: 400px;
+        }
+
+        .terminal-line {
+            margin-bottom: 4px;
+            opacity: 0;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        .terminal-line .prompt {
+            color: var(--accent-green);
+        }
+
+        .terminal-line .command {
+            color: var(--text-primary);
+        }
+
+        .terminal-line .comment {
+            color: var(--text-muted);
+        }
+
+        .terminal-line .warning {
+            color: var(--accent-red);
+            background: var(--accent-red-dim);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .terminal-line .info {
+            color: var(--accent-blue);
+        }
+
+        .terminal-line .success {
+            color: var(--accent-green);
+        }
+
+        .terminal-line .dim {
+            color: var(--text-muted);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Memory Tiers */
+        .tiers-section {
+            padding: 120px 0;
+        }
+
+        .section-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--accent-red);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: clamp(32px, 5vw, 56px);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 24px;
+            line-height: 1.1;
+        }
+
+        .section-desc {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin-bottom: 64px;
+            line-height: 1.6;
+        }
+
+        .tiers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .tier-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tier-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--tier-color);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .tier-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+        }
+
+        .tier-card:hover::before {
+            opacity: 1;
+        }
+
+        .tier-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+            background: var(--tier-dim);
+        }
+
+        .tier-name {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--tier-color);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .tier-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .tier-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .tier-example {
+            margin-top: 16px;
+            padding: 12px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        /* Dashboard Preview */
+        .dashboard-section {
+            padding: 120px 0;
+        }
+
+        .dashboard-preview {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            max-width: 900px;
+            margin: 0 auto;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+        }
+
+        .dashboard-header {
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .dashboard-header h3 {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .dashboard-header .tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            padding: 4px 12px;
+            background: var(--accent-red-dim);
+            color: var(--accent-red);
+            border-radius: 100px;
+        }
+
+        .dashboard-body {
+            padding: 32px;
+        }
+
+        .pattern-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .pattern-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 20px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            transition: all 0.2s ease;
+        }
+
+        .pattern-item:hover {
+            border-color: var(--border-hover);
+        }
+
+        .pattern-severity {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .pattern-severity.critical { background: var(--accent-red); box-shadow: var(--glow-red); }
+        .pattern-severity.high { background: var(--accent-orange); }
+        .pattern-severity.medium { background: var(--accent-yellow); }
+        .pattern-severity.low { background: var(--accent-green); }
+
+        .pattern-info {
+            flex: 1;
+        }
+
+        .pattern-name {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .pattern-meta {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .pattern-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .pattern-count span {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        /* Architecture */
+        .arch-section {
+            padding: 120px 0;
+        }
+
+        .arch-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 64px;
+        }
+
+        .arch-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .arch-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-4px);
+        }
+
+        .arch-icon {
+            font-size: 40px;
+            margin-bottom: 20px;
+        }
+
+        .arch-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 8px;
+        }
+
+        .arch-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .arch-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Scoring */
+        .scoring-section {
+            padding: 120px 0;
+        }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 64px;
+        }
+
+        .score-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+        }
+
+        .score-value {
+            font-size: 48px;
+            font-weight: 900;
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 8px;
+        }
+
+        .score-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .score-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+            margin-top: 16px;
+            overflow: hidden;
+        }
+
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: var(--accent-red);
+            transition: width 1s ease;
+        }
+
+        /* Build in Public */
+        .build-section {
+            padding: 120px 0;
+            text-align: center;
+        }
+
+        .build-timeline {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-top: 64px;
+            flex-wrap: wrap;
+        }
+
+        .build-day {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .build-day-num {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .build-day:hover .build-day-num {
+            border-color: var(--accent-red);
+            background: var(--accent-red-dim);
+            color: var(--accent-red);
+        }
+
+        .build-day-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            max-width: 80px;
+            text-align: center;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 80px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-bottom: 32px;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .footer-copy {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .footer-copy a {
+            color: var(--accent-red);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .arch-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .build-timeline {
+                gap: 16px;
+            }
+            
+            .terminal-body {
+                font-size: 12px;
+                padding: 16px;
+            }
+        }
+
+        /* Scroll animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero -->
+    <section class="hero">
+        <div class="badge">
+            <span class="dot"></span>
+            building in public · sibyl labs hackathon
+        </div>
+        
+        <h1>
+            <span class="highlight">Scar Tissue</span><br>
+            remembers what<br>
+            broke you.
+        </h1>
+        
+        <p class="subtitle">
+            An AI coding agent that tracks your recurring bugs and warns you before you repeat them. 
+            Memory is <code>load-bearing</code>. Delete it, and the agent becomes a generic linter.
+        </p>
+        
+        <div class="cta-group">
+            <a href="https://github.com/yourusername/scar-tissue" class="btn btn-primary">
+                ⭐ Star on GitHub
+            </a>
+            <a href="https://x.com/yourusername" class="btn btn-secondary">
+                Follow the build →
+            </a>
+        </div>
+    </section>
+
+    <!-- Terminal Demo -->
+    <section class="terminal-section">
+        <div class="container">
+            <div class="terminal fade-in">
+                <div class="terminal-header">
+                    <div class="terminal-dot red"></div>
+                    <div class="terminal-dot yellow"></div>
+                    <div class="terminal-dot green"></div>
+                    <div class="terminal-title">scar-tissue — fresh session</div>
+                </div>
+                <div class="terminal-body" id="terminal">
+                    <!-- Lines will be added by JS -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Memory Tiers -->
+    <section class="tiers-section">
+        <div class="container">
+            <div class="fade-in">
+                <div class="section-label">Sibyl Memory · 5-Tier Schema</div>
+                <h2 class="section-title">Every bug has a place.<br>Every pattern persists.</h2>
+                <p class="section-desc">
+                    Built on Sibyl Memory's hierarchical schema. No vectors. No embeddings. 
+                    Just structured, searchable anti-patterns that survive session boundaries.
+                </p>
+            </div>
+            
+            <div class="tiers-grid">
+                <div class="tier-card fade-in" style="--tier-color: var(--accent-red); --tier-dim: var(--accent-red-dim);">
+                    <div class="tier-icon">🔴</div>
+                    <div class="tier-name">HOT</div>
+                    <div class="tier-title">Active Anti-Patterns</div>
+                    <div class="tier-desc">Your current recurring bugs. Loaded every session. Always current.</div>
+                    <div class="tier-example">"This week: 3 null pointer bugs in auth module"</div>
+                </div>
+                
+                <div class="tier-card fade-in" style="--tier-color: var(--accent-orange); --tier-dim: var(--accent-orange-dim);">
+                    <div class="tier-icon">🟠</div>
+                    <div class="tier-name">WARM</div>
+                    <div class="tier-title">Pattern Entities</div>
+                    <div class="tier-desc">Entity files per anti-pattern, per project. Single source of truth.</div>
+                    <div class="tier-example">"off-by-one: 14 occurrences across 6 projects"</div>
+                </div>
+                
+                <div class="tier-card fade-in" style="--tier-color: var(--accent-yellow); --tier-dim: var(--accent-yellow-dim);">
+                    <div class="tier-icon">🟡</div>
+                    <div class="tier-name">COLD</div>
+                    <div class="tier-title">Bug Journal</div>
+                    <div class="tier-desc">Append-only log of every bug, root cause, and fix. Write once, read when needed.</div>
+                    <div class="tier-example">"2026-08-20: IndexError in user.py:47"</div>
+                </div>
+                
+                <div class="tier-card fade-in" style="--tier-color: var(--accent-blue); --tier-dim: var(--accent-blue-dim);">
+                    <div class="tier-icon">🔵</div>
+                    <div class="tier-name">REFERENCE</div>
+                    <div class="tier-title">Coding Conventions</div>
+                    <div class="tier-desc">Your rules, stack gotchas, team conventions. Rarely changes.</div>
+                    <div class="tier-example">"Python: always use enumerate(). Never manually index."</div>
+                </div>
+                
+                <div class="tier-card fade-in" style="--tier-color: var(--accent-purple); --tier-dim: var(--accent-purple-dim);">
+                    <div class="tier-icon">🟣</div>
+                    <div class="tier-name">ARCHIVE</div>
+                    <div class="tier-title">Retired Patterns</div>
+                    <div class="tier-desc">Patterns you've fixed. Kept for audit. You earned these scars.</div>
+                    <div class="tier-example">"Project X: stopped null bugs after adopting Optional"</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Preview -->
+    <section class="dashboard-section">
+        <div class="container">
+            <div class="fade-in" style="text-align: center; margin-bottom: 64px;">
+                <div class="section-label">Anti-Pattern Dashboard</div>
+                <h2 class="section-title">See your bugs.<br>Understand your patterns.</h2>
+                <p class="section-desc" style="margin: 16px auto 0;">
+                    Every session adds to your anti-pattern profile. The dashboard shows you what you keep getting wrong.
+                </p>
+            </div>
+            
+            <div class="dashboard-preview fade-in">
+                <div class="dashboard-header">
+                    <h3>Your Anti-Patterns</h3>
+                    <span class="tag">LIVE</span>
+                </div>
+                <div class="dashboard-body">
+                    <div class="pattern-list">
+                        <div class="pattern-item">
+                            <div class="pattern-severity critical"></div>
+                            <div class="pattern-info">
+                                <div class="pattern-name">Off-by-one errors</div>
+                                <div class="pattern-meta">Most common in loop boundaries · Last: 2 hours ago</div>
+                            </div>
+                            <div class="pattern-count">14 <span>occurrences</span></div>
+                        </div>
+                        
+                        <div class="pattern-item">
+                            <div class="pattern-severity high"></div>
+                            <div class="pattern-info">
+                                <div class="pattern-name">Null/unhandled None</div>
+                                <div class="pattern-meta">Concentrated in auth modules · Last: 1 day ago</div>
+                            </div>
+                            <div class="pattern-count">9 <span>occurrences</span></div>
+                        </div>
+                        
+                        <div class="pattern-item">
+                            <div class="pattern-severity medium"></div>
+                            <div class="pattern-info">
+                                <div class="pattern-name">Missing error handling</div>
+                                <div class="pattern-meta">API calls without try/catch · Last: 3 days ago</div>
+                            </div>
+                            <div class="pattern-count">7 <span>occurrences</span></div>
+                        </div>
+                        
+                        <div class="pattern-item">
+                            <div class="pattern-severity low"></div>
+                            <div class="pattern-info">
+                                <div class="pattern-name">Over-engineering early</div>
+                                <div class="pattern-meta">Costliest in time · Last: 1 week ago</div>
+                            </div>
+                            <div class="pattern-count">4 <span>occurrences</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture -->
+    <section class="arch-section">
+        <div class="container">
+            <div class="fade-in" style="text-align: center;">
+                <div class="section-label">The Stack</div>
+                <h2 class="section-title">Memory-first. Governance-ready.</h2>
+                <p class="section-desc" style="margin: 16px auto 0;">
+                    Sibyl Memory is the core. Base adds governance. Virtuals adds coordination.
+                </p>
+            </div>
+            
+            <div class="arch-grid">
+                <div class="arch-card fade-in">
+                    <div class="arch-icon">🧠</div>
+                    <div class="arch-label">Required</div>
+                    <div class="arch-name">Sibyl Memory</div>
+                    <div class="arch-desc">5-tier SQLite + FTS5. File-based. No vectors. The anti-pattern engine that makes everything work.</div>
+                </div>
+                
+                <div class="arch-card fade-in">
+                    <div class="arch-icon">⛓️</div>
+                    <div class="arch-label">Partner Stack</div>
+                    <div class="arch-name">Base</div>
+                    <div class="arch-desc">Onchain access policies. Answer receipts. Team governance. Verifiable audit trails.</div>
+                </div>
+                
+                <div class="arch-card fade-in">
+                    <div class="arch-icon">🤝</div>
+                    <div class="arch-label">Partner Stack</div>
+                    <div class="arch-name">Virtuals Protocol</div>
+                    <div class="arch-desc">Multi-agent pattern sharing. Agent-to-agent anti-pattern trading. Network intelligence.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scoring -->
+    <section class="scoring-section">
+        <div class="container">
+            <div class="fade-in" style="text-align: center;">
+                <div class="section-label">Builder Score</div>
+                <h2 class="section-title">Built to win.</h2>
+            </div>
+            
+            <div class="score-grid">
+                <div class="score-card fade-in">
+                    <div class="score-value" style="color: var(--accent-red);">40</div>
+                    <div class="score-label">Memory Load-Bearing</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 100%;"></div></div>
+                </div>
+                
+                <div class="score-card fade-in">
+                    <div class="score-value" style="color: var(--accent-orange);">25</div>
+                    <div class="score-label">Innovation</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 100%;"></div></div>
+                </div>
+                
+                <div class="score-card fade-in">
+                    <div class="score-value" style="color: var(--accent-yellow);">20</div>
+                    <div class="score-label">Technical Execution</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 95%;"></div></div>
+                </div>
+                
+                <div class="score-card fade-in">
+                    <div class="score-value" style="color: var(--accent-green);">15</div>
+                    <div class="score-label">Pitch & Presentation</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 100%;"></div></div>
+                </div>
+                
+                <div class="score-card fade-in">
+                    <div class="score-value" style="color: var(--accent-blue);">×1.25</div>
+                    <div class="score-label">Stack Multiplier</div>
+                    <div class="score-bar"><div class="score-bar-fill" style="width: 100%; background: var(--accent-blue);"></div></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Build Timeline -->
+    <section class="build-section">
+        <div class="container">
+            <div class="fade-in">
+                <div class="section-label">10-Day Build</div>
+                <h2 class="section-title">Sep 1 → Sep 10</h2>
+                <p class="section-desc" style="margin: 16px auto 0;">
+                    Building in public. Follow along on X.
+                </p>
+            </div>
+            
+            <div class="build-timeline fade-in">
+                <div class="build-day">
+                    <div class="build-day-num">1</div>
+                    <div class="build-day-label">Schema Design</div>
+                </div>
+                <div class="build-day">
+                    <div class="build-day-num">2</div>
+                    <div class="build-day-label">Agent Core</div>
+                </div>
+                <div class="build-day">
+                    <div class="build-day-num">3</div>
+                    <div class="build-day-label">Detection Engine</div>
+                </div>
+                <div class="build-day">
+                    <div class="build-day-num">4</div>
+                    <div class="build-day-label">Dashboard</div>
+                </div>
+                <div class="build-day">
+                    <div class="build-day-num">5</div>
+                    <div class="build-day-label">Base Contracts</div>
+                </div>
+                <div class="build-day">
+                    <div class="build-day-num">6</div>
+                    <div class="build-day-label">Gate Layer</div>
+                </div>
+                <div class="build-day">
+                    <div class="build-day-num">7</div>
+                    <div class="build-day-label">Receipts</div>
+                </div>
+                <div class="build-day">
+                    <div class="build-day-num">8</div>
+                    <div class="build-day-label">Virtuals</div>
+                </div>
+                <div class="build-day">
+                    <div class="build-day-num">9</div>
+                    <div class="build-day-label">Demo Video</div>
+                </div>
+                <div class="build-day">
+                    <div class="build-day-num">10</div>
+                    <div class="build-day-label">Submit 🩹</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-links">
+                <a href="https://github.com/yourusername/scar-tissue">GitHub</a>
+                <a href="https://x.com/yourusername">X / Twitter</a>
+                <a href="https://discord.gg/csya975jMa">Sibyl Discord</a>
+                <a href="https://hack.sibyllabs.org">Hackathon</a>
+            </div>
+            <p class="footer-copy">
+                Built for the <a href="https://hack.sibyllabs.org">Sibyl Labs Hackathon</a> · Sep 1–10, 2026
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Terminal animation
+        const terminalLines = [
+            { type: 'comment', text: '# fresh session — scar-tissue v0.1.0' },
+            { type: 'comment', text: '# sibyl memory: HOT tier loaded' },
+            { type: 'blank' },
+            { type: 'prompt', text: '$ ', command: 'code auth/login.py' },
+            { type: 'blank' },
+            { type: 'comment', text: '# you start writing...' },
+            { type: 'blank' },
+            { type: 'dim', text: 'def get_user(user_id):' },
+            { type: 'dim', text: '    users = fetch_all_users()' },
+            { type: 'dim', text: '    for i in range(len(users)):' },
+            { type: 'dim', text: '        if users[i].id == user_id:' },
+            { type: 'dim', text: '            return users[i]' },
+            { type: 'blank' },
+            { type: 'warning', text: '⚠️  SCAR TISSUE WARNING' },
+            { type: 'blank' },
+            { type: 'info', text: "You've made off-by-one errors 14 times across 6 projects." },
+            { type: 'info', text: "You also have 8 bugs logged from manual indexing." },
+            { type: 'blank' },
+            { type: 'success', text: '✓ Suggested fix:' },
+            { type: 'dim', text: '  for i, user in enumerate(users):' },
+            { type: 'dim', text: '      if user.id == user_id:' },
+            { type: 'dim', text: '          return user' },
+            { type: 'blank' },
+            { type: 'comment', text: '# memory source: COLD journal (14 entries)' },
+            { type: 'comment', text: '# memory source: WARM entity (off-by-one pattern)' },
+            { type: 'comment', text: '# memory source: REFERENCE (enumerate() convention)' },
+            { type: 'comment', text: '# receipt: base tx 0x7d3e...ff90' },
+        ];
+
+        const terminal = document.getElementById('terminal');
+        let lineIndex = 0;
+
+        function addLine() {
+            if (lineIndex >= terminalLines.length) return;
+            
+            const lineData = terminalLines[lineIndex];
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+            line.style.animationDelay = `${lineIndex * 0.05}s`;
+            
+            if (lineData.type === 'blank') {
+                line.innerHTML = '&nbsp;';
+            } else if (lineData.type === 'prompt') {
+                line.innerHTML = `<span class="prompt">${lineData.text}</span><span class="command">${lineData.command}</span>`;
+            } else {
+                line.innerHTML = `<span class="${lineData.type}">${lineData.text}</span>`;
+            }
+            
+            terminal.appendChild(line);
+            lineIndex++;
+            
+            setTimeout(addLine, 80);
+        }
+
+        // Start terminal animation when visible
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    addLine();
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        observer.observe(terminal);
+
+        // Fade in animations
+        const fadeObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            fadeObserver.observe(el);
+        });
+    </script>
+</body>
+</html>
